@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import GlobalBackground from "@/components/GlobalBackground";
 
 export const metadata: Metadata = {
   title: "LuECE | Lucknow University ECE Department",
@@ -14,6 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased overflow-x-hidden">
+        <GlobalBackground />
         {children}
       </body>
     </html>

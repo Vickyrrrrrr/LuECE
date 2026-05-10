@@ -12,10 +12,6 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="relative px-4 sm:px-6 py-16 sm:py-20 lg:py-32 flex flex-col items-center text-center">
-        <div className="absolute inset-0 -z-10 opacity-30 pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-48 sm:w-96 h-48 sm:h-96 bg-orange-200 rounded-full blur-[80px] sm:blur-[120px]" />
-          <div className="absolute bottom-1/4 right-1/4 w-48 sm:w-96 h-48 sm:h-96 bg-blue-100 rounded-full blur-[80px] sm:blur-[120px]" />
-        </div>
 
         <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-pill bg-cream border border-cream-border text-[10px] sm:text-xs font-normal text-charcoal mb-6 sm:mb-8">
           <Sparkles size={12} className="sm:hidden" />
