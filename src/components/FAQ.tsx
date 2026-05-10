@@ -10,14 +10,15 @@ export default function FAQ() {
 
   return (
     <div className="space-y-4 max-w-3xl mx-auto py-12" id="faq">
-      <h2 className="text-5xl font-semibold tracking-tight-heading leading-[1.0] text-charcoal text-center mb-12">
+      <h2 className="text-3xl sm:text-5xl font-semibold tracking-tight-heading leading-[1.0] text-charcoal text-center mb-8 sm:mb-12">
         Common Questions
       </h2>
       {ECE_DATA.faq.map((item, i) => (
         <div key={i} className="card-premium cursor-pointer" onClick={() => setOpenIndex(openIndex === i ? null : i)}>
-          <div className="flex justify-between items-center">
-            <h4 className="text-lg font-normal text-charcoal">{item.question}</h4>
-            {openIndex === i ? <Minus size={20} /> : <Plus size={20} />}
+          <div className="flex justify-between items-center gap-3">
+            <h4 className="text-sm sm:text-lg font-normal text-charcoal">{item.question}</h4>
+            {openIndex === i ? <Minus size={16} className="sm:hidden" /> : <Plus size={16} className="sm:hidden" />}
+            {openIndex === i ? <Minus size={20} className="hidden sm:block flex-shrink-0" /> : <Plus size={20} className="hidden sm:block flex-shrink-0" />}
           </div>
           <AnimatePresence>
             {openIndex === i && (

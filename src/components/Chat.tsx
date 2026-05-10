@@ -4,6 +4,16 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, User, Bot, Sparkles, Loader2 } from "lucide-react";
 
+function renderBold(text: string) {
+  const parts = text.split(/(\*\*.*?\*\*)/);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+}
+
 type Message = {
   role: "user" | "assistant";
   content: string;
@@ -123,18 +133,19 @@ export default function Chat() {
   const showSuggestions = messages.length === 1 && !isTyping;
 
   return (
-    <div className="flex flex-col h-[600px] w-full max-w-2xl mx-auto card-premium overflow-hidden">
-      <div className="flex items-center gap-2 p-4 border-b border-cream-border">
-        <div className="p-2 bg-charcoal text-white rounded-full">
-          <Sparkles size={18} />
+    <div className="flex flex-col h-[70vh] sm:h-[600px] w-full max-w-2xl mx-auto card-premium overflow-hidden">
+      <div className="flex items-center gap-2 p-3 sm:p-4 border-b border-cream-border">
+        <div className="p-1.5 sm:p-2 bg-charcoal text-white rounded-full">
+          <Sparkles size={16} className="sm:hidden" />
+          <Sparkles size={18} className="hidden sm:block" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-charcoal">ECE Advisor</h3>
-          <p className="text-xs text-charcoal-muted">Always active for LU students</p>
+          <h3 className="text-xs sm:text-sm font-semibold text-charcoal">ECE Advisor</h3>
+          <p className="text-[10px] sm:text-xs text-charcoal-muted">Always active for LU students</p>
         </div>
       </div>
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 scroll-smooth">
         {showSuggestions && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-wrap gap-2 justify-center pb-2">
             {SUGGESTIONS.map((s) => (
@@ -157,19 +168,15 @@ export default function Chat() {
               transition={{ duration: 0.25, ease: "easeOut" }}
               className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
             >
-              <div className={`flex gap-3 max-w-[80%] ${m.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
-                <div className={`mt-1 p-1.5 rounded-full flex-shrink-0 ${m.role === "user" ? "bg-charcoal text-white" : "bg-cream-border text-charcoal"}`}>
-                  {m.role === "user" ? <User size={14} /> : <Bot size={14} />}
+              <div className={`flex gap-2 sm:gap-3 max-w-[85%] sm:max-w-[80%] ${m.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
+                <div className={`mt-1 p-1 sm:p-1.5 rounded-full flex-shrink-0 ${m.role === "user" ? "bg-charcoal text-white" : "bg-cream-border text-charcoal"}`}>
+                  {m.role === "user" ? <User size={12} className="sm:hidden" /> : <Bot size={12} className="sm:hidden" />}
+                  {m.role === "user" ? <User size={14} className="hidden sm:block" /> : <Bot size={14} className="hidden sm:block" />}
                 </div>
-                <div className={`p-3 rounded-card text-sm leading-relaxed ${
+                <div className={`p-2.5 sm:p-3 rounded-card text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${
                   m.role === "user" ? "bg-charcoal text-charcoal-offwhite" : "bg-cream border border-cream-border text-charcoal"
                 }`}>
-                  <div
-                    className="whitespace-pre-wrap"
-                    dangerouslySetInnerHTML={{
-                      __html: m.content.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>"),
-                    }}
-                  />
+                  {renderBold(m.content)}
                 </div>
               </div>
             </motion.div>
@@ -215,7 +222,7 @@ export default function Chat() {
         <div ref={bottomRef} />
       </div>
 
-      <div className="p-4 border-t border-cream-border">
+      <div className="p-3 sm:p-4 border-t border-cream-border">
         <div className="relative flex items-end gap-2">
           <textarea
             ref={inputRef}
@@ -225,14 +232,15 @@ export default function Chat() {
             placeholder="Ask about placement, curriculum, faculty..."
             rows={1}
             disabled={isTyping}
-            className="flex-1 bg-cream p-4 pr-4 rounded-container border border-cream-border focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-sm transition-all resize-none disabled:opacity-50"
+            className="flex-1 bg-cream p-3 sm:p-4 rounded-container border border-cream-border focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-xs sm:text-sm transition-all resize-none disabled:opacity-50"
           />
           <button
             onClick={handleSend}
             disabled={isTyping || !input.trim()}
-            className="p-3 bg-charcoal text-white rounded-pill hover:opacity-80 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
+            className="p-2.5 sm:p-3 bg-charcoal text-white rounded-pill hover:opacity-80 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex-shrink-0"
           >
-            {isTyping ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+            {isTyping ? <Loader2 size={16} className="animate-spin sm:hidden" /> : <Send size={16} className="sm:hidden" />}
+            {isTyping ? <Loader2 size={18} className="animate-spin hidden sm:block" /> : <Send size={18} className="hidden sm:block" />}
           </button>
         </div>
       </div>
