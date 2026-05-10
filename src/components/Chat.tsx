@@ -9,6 +9,14 @@ type Message = {
   content: string;
 };
 
+const SUGGESTIONS = [
+  "What is the placement scenario?",
+  "What will I study in first year?",
+  "Is attendance mandatory?",
+  "Tell me about labs and infrastructure",
+  "What about the faculty?",
+];
+
 export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([
     { role: "assistant", content: "Hello! I'm your LuECE guide. Ask me anything about Lucknow University's ECE department, placements, or curriculum." }
@@ -24,12 +32,10 @@ export default function Chat() {
     }
   }, [messages]);
 
-  const handleSend = useCallback(async () => {
-    if (!input.trim() || isTyping) return;
+  const sendMessage = useCallback(async (text: string) => {
+    if (!text.trim() || isTyping) return;
 
-    const userMessage: Message = { role: "user", content: input };
-    setMessages((prev) => [...prev, userMessage]);
-    const userInput = input;
+    setMessages((prev) => [...prev, { role: "user", content: text }]);
     setInput("");
     setIsTyping(true);
 
@@ -41,13 +47,11 @@ export default function Chat() {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userInput }),
+        body: JSON.stringify({ message: text }),
         signal: controller.signal,
       });
 
-      if (!response.ok) {
-        throw new Error(await response.text());
-      }
+      if (!response.ok) throw new Error(await response.text());
 
       const reader = response.body!.getReader();
       const decoder = new TextDecoder();
@@ -60,9 +64,7 @@ export default function Chat() {
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
-
-        for (const line of lines) {
+        for (const line of chunk.split("\n")) {
           if (line.startsWith("data: ") && line !== "data: [DONE]") {
             try {
               const data = JSON.parse(line.slice(6));
@@ -88,7 +90,13 @@ export default function Chat() {
     } finally {
       setIsTyping(false);
     }
-  }, [input, isTyping]);
+  }, [isTyping]);
+
+  const handleSend = useCallback(() => {
+    sendMessage(input);
+  }, [input, sendMessage]);
+
+  const showSuggestions = messages.length === 1 && !isTyping;
 
   return (
     <div className="flex flex-col h-[600px] w-full max-w-2xl mx-auto card-premium overflow-hidden">
@@ -103,6 +111,19 @@ export default function Chat() {
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth">
+        {showSuggestions && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-wrap gap-2 justify-center pb-2">
+            {SUGGESTIONS.map((s) => (
+              <button
+                key={s}
+                onClick={() => sendMessage(s)}
+                className="px-3 py-1.5 text-xs border border-cream-border rounded-pill bg-cream text-charcoal hover:bg-cream-border transition-colors"
+              >
+                {s}
+              </button>
+            ))}
+          </motion.div>
+        )}
         <AnimatePresence>
           {messages.map((m, i) => (
             <motion.div
@@ -118,7 +139,12 @@ export default function Chat() {
                 <div className={`p-3 rounded-card text-sm leading-relaxed ${
                   m.role === "user" ? "bg-charcoal text-charcoal-offwhite" : "bg-cream border border-cream-border text-charcoal"
                 }`}>
-                  {m.content}
+                  <div
+                    className="whitespace-pre-wrap"
+                    dangerouslySetInnerHTML={{
+                      __html: m.content.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>"),
+                    }}
+                  />
                 </div>
               </div>
             </motion.div>

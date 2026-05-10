@@ -6,22 +6,23 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "scrape": "node scripts/scrape.mjs"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.0",
     "clsx": "latest",
     "framer-motion": "latest",
     "lucide-react": "latest",
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest",
+    "next": "^16.2.6",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
     "tailwind-merge": "latest"
   },
   "devDependencies": {
     "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "autoprefixer": "latest",
     "postcss": "latest",
     "tailwindcss": "latest",

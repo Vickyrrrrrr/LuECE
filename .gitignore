@@ -2,3 +2,6 @@ node_modules/
 .next/
 .env*.local
 *.tsbuildinfo
+scripts/scrape.mjs
+scraping/Just Run it
+scraping
