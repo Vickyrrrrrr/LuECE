@@ -1,0 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  /* Colors */
+  --color-charcoal: #1c1c1c;
+  --color-charcoal-muted: #5f5f5d;
+  --color-charcoal-offwhite: #fcfbf8;
+  --color-cream: #f7f4ed;
+  --color-cream-surface: #f7f4ed;
+  --color-cream-border: #eceae4;
+
+  /* Radius */
+  --radius-micro: 4px;
+  --radius-standard: 6px;
+  --radius-comfortable: 8px;
+  --radius-card: 12px;
+  --radius-container: 16px;
+  --radius-pill: 9999px;
+
+  /* Shadow */
+  --shadow-inset-button: rgba(255,255,255,0.2) 0px 0.5px 0px 0px inset, rgba(0,0,0,0.2) 0px 0px 0px 0.5px inset, rgba(0,0,0,0.05) 0px 1px 2px 0px;
+  --shadow-focus-warm: rgba(0,0,0,0.1) 0px 4px 12px;
+
+  /* Letter Spacing */
+  --letter-spacing-tight-hero: -1.5px;
+  --letter-spacing-tight-heading: -1.2px;
+  --letter-spacing-tight-sub: -0.9px;
+}
+
+@layer base {
+  :root {
+    --background: #f7f4ed;
+    --foreground: #1c1c1c;
+  }
+
+  body {
+    color: var(--foreground);
+    background: var(--background);
+    font-family: 'Camera Plain Variable', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-charcoal text-charcoal-offwhite px-4 py-2 rounded-standard shadow-inset-button active:opacity-80 transition-all focus:shadow-focus-warm focus:outline-none;
+  }
+  
+  .btn-ghost {
+    @apply bg-transparent text-charcoal px-4 py-2 rounded-standard border border-[rgba(28,28,28,0.4)] active:opacity-80 transition-all focus:shadow-focus-warm focus:outline-none;
+  }
+
+  .btn-cream {
+    @apply bg-cream text-charcoal px-4 py-2 rounded-standard active:opacity-80 transition-all focus:shadow-focus-warm focus:outline-none;
+  }
+  
+  .card-premium {
+    @apply bg-cream border border-cream-border rounded-card p-6 transition-all;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f7f4ed;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #eceae4;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(28,28,28,0.1);
+}
+
