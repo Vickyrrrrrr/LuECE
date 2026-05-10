@@ -1,4 +1,5 @@
 import { ECE_DATA } from "./data";
+import { CUTOFF_DATA } from "./cutoff";
 
 type Chunk = {
   id: string;
@@ -36,6 +37,21 @@ export class RAGEngine {
         synonyms: ["phd", "doctorate", "iit", "instructor", "mentor", "researcher", "experienced", "doctor", "siddharth", "anand", "manoj", "anum", "roli", "assistant professor", "coordinator", "guest faculty"],
         response: ECE_DATA.faculty.content,
       },
+      ...(() => {
+        const cutoffText = CUTOFF_DATA.length > 0
+          ? `Previous year cutoffs for ECE at LU (UPTAC):\n${CUTOFF_DATA.map(
+              (c) => `${c.year} ${c.category} Round ${c.round}: ${c.rank}`
+            ).join("\n")}`
+          : null;
+        return cutoffText
+          ? [{
+              id: "cutoffs",
+              keywords: ["cutoff", "cut off", "rank", "closing", "opening", "uptac"],
+              synonyms: ["category", "general", "obc", "sc", "st", "ews", "admission", "counselling", "previous year", "merit", "female", "defence", "opening", "closing", "round", "rank list", "seat", "allotment", "jee main", "uptac", "2025"],
+              response: cutoffText,
+            }]
+          : [];
+      })(),
       {
         id: "placements",
         keywords: ["placement", "job", "salary", "package", "lpa"],

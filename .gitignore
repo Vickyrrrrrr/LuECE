@@ -5,3 +5,4 @@ node_modules/
 scripts/scrape.mjs
 scraping/Just Run it
 scraping
+design.md

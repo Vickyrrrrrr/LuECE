@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "scrape": "node scripts/scrape.mjs"
+    "scrape": "node scripts/scrape.mjs",
+    "extract-pdf": "node scripts/extract-pdf.mjs"
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.0",
@@ -15,6 +16,7 @@
     "framer-motion": "latest",
     "lucide-react": "latest",
     "next": "^16.2.6",
+    "pdf-parse": "^1.1.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "tailwind-merge": "latest"
