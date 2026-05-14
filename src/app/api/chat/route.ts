@@ -1,13 +1,7 @@
 import { NextRequest } from "next/server";
-import { ECE_DATA } from "@/lib/data";
-import { CUTOFF_DATA } from "@/lib/cutoff";
 import { rag } from "@/lib/rag";
 
-const cutoffSection = CUTOFF_DATA.length > 0
-  ? `\n=== CUTOFF RANKS ===\n${CUTOFF_DATA.map(
-      (c) => `${c.year} - ${c.category} - Round ${c.round}: ${c.rank}`
-    ).join("\n")}`
-  : "\n=== CUTOFF RANKS ===\nNo cutoff data available yet.";
+export const runtime = "edge";
 
 const SYSTEM_PROMPT = `You are LuECE Advisor, a thoughtful and highly capable AI assistant for students at Lucknow University's ECE department.
 
@@ -15,15 +9,15 @@ Your writing style should be professional yet warm, clear, and direct—modeled 
 
 GUIDELINES:
 - **BE EXTREMELY CONCISE**. Never use three sentences when one will do.
-- **Zero-Filler Policy**: Do not provide generic advice (e.g., "I recommend visiting the office") unless it's the only possible answer.
-- If the context doesn't contain the answer, state that clearly and briefly (e.g., "I don't have that specific data. Please contact the department office.").
-- Avoid introductory phrases like "Based on the provided context" or "Unfortunately...".
+- **Zero-Filler Policy**: Do not provide generic advice unless it's the only possible answer.
 - **BOLD all names, technical terms, and important entities** for high contrast.
-- **Use Markdown features** (tables/lists) only when they make info *shorter* to read.
-- Maintain a calm, minimalist, professional tone.
-- No emojis, no fluff.
+- Maintain a calm, minimalist, professional tone. No emojis.
 
-Answer based ONLY on the provided context. If asked about something outside the ECE department, politely redirect to department-specific topics.`;
+KNOWLEDGE SOURCES:
+1. **Primary**: Use the provided CONTEXT for all official Lucknow University ECE data.
+2. **Secondary**: If the context doesn't contain the answer, use your general knowledge to provide a helpful, accurate response. 
+3. **Disclosure**: If using general knowledge for university-specific queries, briefly mention that it's based on general standards rather than official department records.
+4. **Scope**: For topics entirely unrelated to engineering, education, or Lucknow University, politely guide the user back to relevant topics.`;
 
 function sseEvent(data: unknown): string {
   return `data: ${JSON.stringify(data)}\n\n`;
@@ -67,6 +61,7 @@ export async function POST(req: NextRequest) {
   // Send to LLM with full conversation context
   const apiKey = process.env.API_KEY || process.env.NVIDIA_API_KEY;
   if (!apiKey) {
+    console.error("Chat API Error: NVIDIA_API_KEY is missing from environment variables.");
     return new Response("API key not configured", { status: 500 });
   }
 
@@ -85,7 +80,7 @@ export async function POST(req: NextRequest) {
   console.log("Sending request to NVIDIA API...");
   const startTime = Date.now();
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+  const timeoutId = setTimeout(() => controller.abort(), 25000); // 25s timeout for Edge
 
   try {
     const response = await fetch(
@@ -112,8 +107,9 @@ export async function POST(req: NextRequest) {
     console.log(`NVIDIA API response received in ${Date.now() - startTime}ms | Status: ${response.status}`);
 
     if (!response.ok) {
-      const error = await response.text();
-      return new Response(`API error: ${error}`, { status: response.status });
+      const errorText = await response.text();
+      console.error(`NVIDIA API Error (${response.status}):`, errorText);
+      return new Response(`API error: ${errorText}`, { status: response.status });
     }
 
     const reader = response.body?.getReader();
@@ -145,7 +141,7 @@ export async function POST(req: NextRequest) {
                   const data = JSON.parse(line.slice(6));
                   fullResponse += data.choices?.[0]?.delta?.content || "";
                 } catch (e) {
-                  // Ignore incomplete JSON in a single line
+                  // Ignore incomplete JSON
                 }
               }
             }
@@ -154,6 +150,7 @@ export async function POST(req: NextRequest) {
           controller.close();
           rag.cacheResponse(message, fullResponse);
         } catch (err) {
+          console.error("Streaming error:", err);
           controller.error(err);
         }
       },
@@ -165,10 +162,11 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     clearTimeout(timeoutId);
     if (err.name === 'AbortError') {
-      console.error("NVIDIA API request timed out after 15s");
+      console.error("NVIDIA API request timed out after 25s");
       return new Response("API request timed out. Please try again.", { status: 504 });
     }
     console.error("NVIDIA API fetch error:", err);
     return new Response(`Fetch error: ${err.message}`, { status: 500 });
   }
 }
+

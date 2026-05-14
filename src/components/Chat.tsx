@@ -109,9 +109,11 @@ export default function Chat() {
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "AbortError") return;
+      console.error("Chat Error:", err);
+      const errorMessage = err instanceof Error ? err.message : "Something went wrong";
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Sorry, something went wrong. Please try again." },
+        { role: "assistant", content: `**Error:** ${errorMessage}. Please check your connection or API configuration.` },
       ]);
     } finally {
       setIsTyping(false);
