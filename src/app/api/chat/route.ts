@@ -56,7 +56,14 @@ function buildSSEStream(content: string): ReadableStream {
 }
 
 export async function POST(req: NextRequest) {
-  const { message, history } = await req.json();
+  let body;
+  try {
+    body = await req.json();
+  } catch (err) {
+    console.error("Error parsing request JSON:", err);
+    return new Response("Invalid JSON body", { status: 400 });
+  }
+  const { message, history } = body;
 
   if (!message) {
     return new Response("Message is required", { status: 400 });
@@ -94,7 +101,7 @@ export async function POST(req: NextRequest) {
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: "minimaxai/minimax-m2.7",
+      model: "meta/llama-3.1-8b-instruct",
       messages: llmMessages,
       temperature: 0.7,
       top_p: 0.9,
@@ -112,6 +119,7 @@ export async function POST(req: NextRequest) {
   const decoder = new TextDecoder();
   const encoder = new TextEncoder();
   let fullResponse = "";
+  let streamBuffer = "";
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -123,12 +131,17 @@ export async function POST(req: NextRequest) {
           const text = decoder.decode(value, { stream: true });
           controller.enqueue(encoder.encode(text));
 
-          for (const line of text.split("\n")) {
+          const lines = (streamBuffer + text).split("\n");
+          streamBuffer = lines.pop() || "";
+
+          for (const line of lines) {
             if (line.startsWith("data: ") && line !== "data: [DONE]") {
               try {
                 const data = JSON.parse(line.slice(6));
                 fullResponse += data.choices?.[0]?.delta?.content || "";
-              } catch { }
+              } catch (e) {
+                // Ignore incomplete JSON in a single line, though less likely now
+              }
             }
           }
         }

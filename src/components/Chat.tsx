@@ -80,6 +80,7 @@ export default function Chat() {
       const reader = response.body!.getReader();
       const decoder = new TextDecoder();
       let assistantContent = "";
+      let streamBuffer = "";
 
       setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
@@ -91,7 +92,10 @@ export default function Chat() {
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
-        for (const line of chunk.split("\n")) {
+        const lines = (streamBuffer + chunk).split("\n");
+        streamBuffer = lines.pop() || "";
+
+        for (const line of lines) {
           if (line.startsWith("data: ") && line !== "data: [DONE]") {
             try {
               const data = JSON.parse(line.slice(6));
@@ -104,7 +108,9 @@ export default function Chat() {
                   return updated;
                 });
               }
-            } catch { }
+            } catch (e) {
+              console.error("Error parsing stream chunk:", e);
+            }
           }
         }
       }
