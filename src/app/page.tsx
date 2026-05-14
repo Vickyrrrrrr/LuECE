@@ -1,13 +1,38 @@
+"use client";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 import FAQ from "@/components/FAQ";
 import CutoffTabs from "@/components/CutoffTabs";
 import { ECE_DATA } from "@/lib/data";
+import { motion } from "framer-motion";
 import { Sparkles, BookOpen, Building2, GraduationCap, TrendingUp, MessageSquare, ChevronRight } from "lucide-react";
 
 export default function Home() {
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "name": "LuECE | Lucknow University ECE Advisor",
+    "description": "AI-powered guide for first-year ECE students at Lucknow University.",
+    "url": "https://luece.vercel.app",
+    "mainEntity": {
+      "@type": "FAQPage",
+      "mainEntity": ECE_DATA.faq.map((f: any) => ({
+        "@type": "Question",
+        "name": f.question,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": f.answer
+        }
+      }))
+    }
+  };
+
   return (
     <main className="min-h-screen bg-cream">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Navbar />
 
       {/* Hero Section */}
@@ -19,9 +44,14 @@ export default function Home() {
           <span>Department of Electronics & Communication Engineering</span>
         </div>
 
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight-hero leading-[1.1] text-charcoal mb-6 sm:mb-8 max-w-4xl px-2">
+        <motion.h1 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight-hero leading-[1.1] text-charcoal mb-6 sm:mb-8 max-w-4xl px-2"
+        >
           Your Future in ECE Starts at Lucknow University.
-        </h1>
+        </motion.h1>
         
         <p className="text-base sm:text-xl text-charcoal-muted max-w-2xl mb-10 sm:mb-12 leading-relaxed px-2">
           The official guide for first-year students. Discover the curriculum, infrastructure, and your career path in the heart of Lucknow.
@@ -33,7 +63,12 @@ export default function Home() {
         </div>
 
         {/* Stats Section */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 w-full max-w-5xl py-10 sm:py-12 border-y border-cream-border">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 w-full max-w-5xl py-10 sm:py-12 border-y border-cream-border animate-[float_6s_ease-in-out_infinite]"
+        >
           <div className="text-center">
             <h3 className="text-3xl sm:text-5xl font-semibold tracking-tight-heading text-charcoal mb-1 sm:mb-2">11</h3>
             <p className="text-[10px] sm:text-sm text-charcoal-muted uppercase tracking-widest font-normal">Labs</p>
@@ -50,7 +85,7 @@ export default function Home() {
             <h3 className="text-3xl sm:text-5xl font-semibold tracking-tight-heading text-charcoal mb-1 sm:mb-2">9</h3>
             <p className="text-[10px] sm:text-sm text-charcoal-muted uppercase tracking-widest font-normal">Faculty</p>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Overview Section */}

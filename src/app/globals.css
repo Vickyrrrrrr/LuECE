@@ -27,6 +27,15 @@
   --letter-spacing-tight-hero: -1.5px;
   --letter-spacing-tight-heading: -1.2px;
   --letter-spacing-tight-sub: -0.9px;
+
+  /* Animation */
+  --animate-float: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
 }
 
 @layer base {
@@ -40,6 +49,22 @@
     background: var(--background);
     font-family: 'Camera Plain Variable', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+    opacity: 0.05;
+    pointer-events: none;
+    z-index: 9999;
+    filter: contrast(120%) brightness(100%);
   }
 }
 

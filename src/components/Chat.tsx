@@ -2,21 +2,15 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, User, Bot, Sparkles, Loader2 } from "lucide-react";
+import { Send, User, Bot, Sparkles, Loader2, Copy, Check } from "lucide-react";
 
-function renderBold(text: string) {
-  const parts = text.split(/(\*\*.*?\*\*)/);
-  return parts.map((part, i) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={i}>{part.slice(2, -2)}</strong>;
-    }
-    return part;
-  });
-}
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 type Message = {
   role: "user" | "assistant";
   content: string;
+  source?: string;
 };
 
 const SUGGESTIONS = [
@@ -33,6 +27,7 @@ export default function Chat() {
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -84,9 +79,7 @@ export default function Chat() {
 
       setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
-      // Small delay so the loading dots are visible before stream starts
-      await new Promise((r) => setTimeout(r, 200));
-
+      // Start stream immediately
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -179,10 +172,33 @@ export default function Chat() {
                   {m.role === "user" ? <User size={12} className="sm:hidden" /> : <Bot size={12} className="sm:hidden" />}
                   {m.role === "user" ? <User size={14} className="hidden sm:block" /> : <Bot size={14} className="hidden sm:block" />}
                 </div>
-                <div className={`p-2.5 sm:p-3 rounded-card text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${
-                  m.role === "user" ? "bg-charcoal text-charcoal-offwhite" : "bg-cream border border-cream-border text-charcoal"
-                }`}>
-                  {renderBold(m.content)}
+                <div className="flex flex-col gap-1 w-full">
+                  <div className={`p-3 sm:p-4 rounded-card text-xs sm:text-sm leading-relaxed prose prose-sm max-w-none relative group ${
+                    m.role === "user" ? "bg-charcoal text-charcoal-offwhite" : "bg-cream border border-cream-border text-charcoal shadow-sm"
+                  }`}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {m.content}
+                    </ReactMarkdown>
+                    
+                    {m.role === "assistant" && m.content && (
+                      <button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(m.content);
+                          setCopiedIndex(i);
+                          setTimeout(() => setCopiedIndex(null), 2000);
+                        }}
+                        className="absolute top-2 right-2 p-1.5 rounded-micro bg-cream/50 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-cream-border text-charcoal-muted"
+                        title="Copy to clipboard"
+                      >
+                        {copiedIndex === i ? <Check size={12} className="text-green-600" /> : <Copy size={12} />}
+                      </button>
+                    )}
+                  </div>
+                  {m.source && (
+                    <span className="text-[10px] text-charcoal-muted opacity-50 px-1">
+                      Source: {m.source}
+                    </span>
+                  )}
                 </div>
               </div>
             </motion.div>

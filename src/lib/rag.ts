@@ -105,6 +105,29 @@ export class RAGEngine {
     return { answer: null, source: null };
   }
 
+  getRelevantContext(input: string): string {
+    const n = this.normalize(input);
+    const results: { chunk: Chunk; score: number }[] = [];
+
+    for (const chunk of this.chunks) {
+      let score = 0;
+      for (const kw of chunk.keywords) {
+        if (n.includes(kw)) score += 3;
+      }
+      for (const syn of chunk.synonyms) {
+        if (n.includes(syn)) score += 1;
+      }
+      if (score > 0) results.push({ chunk, score });
+    }
+
+    // Sort by score and take top 3
+    const top = results.sort((a, b) => b.score - a.score).slice(0, 3);
+    
+    if (top.length === 0) return "";
+
+    return top.map(t => `=== ${t.chunk.id.toUpperCase()} ===\n${t.chunk.response}`).join("\n\n");
+  }
+
   cacheResponse(query: string, response: string) {
     const n = this.normalize(query);
     this.cache.set(n, response);

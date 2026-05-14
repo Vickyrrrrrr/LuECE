@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.0",
+    "@tailwindcss/typography": "^0.5.19",
     "clsx": "latest",
     "framer-motion": "latest",
     "lucide-react": "latest",
@@ -19,6 +20,8 @@
     "pdf-parse": "^1.1.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "tailwind-merge": "latest"
   },
   "devDependencies": {
