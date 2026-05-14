@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Send to LLM with full conversation context
-  const apiKey = process.env.NVIDIA_API_KEY;
+  const apiKey = process.env.API_KEY || process.env.NVIDIA_API_KEY;
   if (!apiKey) {
     return new Response("API key not configured", { status: 500 });
   }
