@@ -101,7 +101,7 @@ function buildLegacyChunks(): LegacyChunk[] {
   return [
     {
       id: "curriculum",
-      keywords: ["curriculum", "syllabus", "teach", "subject", "study", "nep"],
+      keywords: ["curriculum", "syllabus", "subjects", "study", "nep"],
       synonyms: ["course", "semester", "learn", "topic", "first year", "electronics", "math", "physics", "basic electronics", "signal", "embedded", "vlsi", "wireless", "digital", "lateral", "four year", "b.tech", "btech", "programme", "thrust", "semester"],
       response: ECE_DATA.curriculum.content,
     },
@@ -114,7 +114,7 @@ function buildLegacyChunks(): LegacyChunk[] {
     {
       id: "faculty",
       keywords: ["faculty", "teacher", "professor", "lecturer", "hod"],
-      synonyms: ["phd", "doctorate", "iit", "instructor", "mentor", "researcher", "experienced", "doctor", "siddharth", "anand", "manoj", "anum", "roli", "deepak", "gupta", "akshat", "sonkar", "assistant dean", "assistant professor", "coordinator", "guest faculty", "student assistant"],
+      synonyms: ["phd", "doctorate", "iit", "instructor", "mentor", "researcher", "experienced", "doctor", "siddharth", "anand", "manoj", "anum", "roli", "deepak", "gupta", "akshat", "sonkar", "assistant dean", "assistant professor", "coordinator", "guest faculty", "student assistant", "best", "good", "senior", "guide"],
       response: ECE_DATA.faculty.content,
     },
     ...(() => {
