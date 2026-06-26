@@ -1,5 +1,3 @@
-import { pipeline } from "@huggingface/transformers";
-
 type ModelPipeline = {
   embed: (text: string) => Promise<Float32Array>;
 };
@@ -12,6 +10,7 @@ export async function getEmbedder(): Promise<ModelPipeline> {
   if (loading) return loading;
 
   loading = (async () => {
+    const { pipeline } = await import("@huggingface/transformers");
     const extractor = await pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2");
     model = {
       embed: async (text: string) => {
