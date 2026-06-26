@@ -35,6 +35,11 @@ export const LU_SOURCES: LUSource[] = [
     keywords: ["about", "university", "lucknow", "campus", "history"],
     label: "LU Home",
   },
+  {
+    url: "https://www.lkouniv.ac.in/",
+    keywords: ["web", "search", "searching", "look up", "online", "internet", "fetch", "find"],
+    label: "LU Home (live fetch)",
+  },
 ];
 
 export function findBestSource(query: string): LUSource | null {
