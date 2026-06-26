@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { rag } from "@/lib/rag";
+import { findBestSource, fetchCached } from "@/lib/lu-html";
 
 export const runtime = "edge";
 
@@ -129,10 +130,21 @@ export async function POST(req: NextRequest) {
   }
 
   const context = clientContext || rag.getRelevantContext(message);
-  console.log(`Query: "${message}" | Context Size: ${context.length} chars | Source: ${clientContext ? "client (semantic)" : "server (keyword)"}`);
-  
+
+  // Web fetch fallback when local context is weak
+  let webText: string | null = null;
+  if (!context || context.length < 80) {
+    const source = findBestSource(message);
+    if (source) webText = await fetchCached(source.url);
+  }
+
+  console.log(`Query: "${message}" | Context Size: ${context.length} chars | Source: ${clientContext ? "client (semantic)" : "server (keyword)"}${webText ? " | Web fallback used" : ""}`);
+
+  const promptContext = context || "No local data found.";
+  const webContext = webText ? `\n\nWeb source:\n${webText}` : "";
+
   const llmMessages = [
-    { role: "system", content: `${SYSTEM_PROMPT}\n\nCONTEXT:\n${context || "No specific local data found. Answer generally based on department standards if possible, or ask for clarification."}` },
+    { role: "system", content: `${SYSTEM_PROMPT}\n\nCONTEXT:\n${promptContext}${webContext}` },
     ...safeHistory,
     { role: "user", content: message },
   ];

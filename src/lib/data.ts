@@ -56,7 +56,7 @@ export const ECE_DATA = {
     },
     {
       question: "What information do you have access to?",
-      answer: "Curriculum, faculty, placements, infrastructure, cutoffs, VLSI roadmap (at /roadmap), and common FAQs about LU ECE department. If something's not covered, I'll say so."
+      answer: "Curriculum, faculty, placements, infrastructure, cutoffs, VLSI roadmap (/roadmap), and common FAQs. Can also fetch live data from LU website if something's not in local data."
     }
   ]
 };
