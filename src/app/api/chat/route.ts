@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           model: "meta/llama-3.1-8b-instruct",
           messages: llmMessages,
-          temperature: 0.2,
+          temperature: 0.6,
           top_p: 0.7,
           max_tokens: 1024,
           stream: true,
