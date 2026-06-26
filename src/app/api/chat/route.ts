@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { rag } from "@/lib/rag";
+import { rag, buildFullContext } from "@/lib/rag";
 import { findBestSource, fetchCached } from "@/lib/lu-html";
 
 export const runtime = "edge";
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
     console.error("Error parsing request JSON:", err);
     return new Response("Invalid JSON body", { status: 400 });
   }
-  const { message, history, context: clientContext } = body;
+  const { message, history } = body;
 
   if (!message || typeof message !== "string" || message.length > 5000) {
     return new Response("Message is required", { status: 400 });
@@ -129,22 +129,20 @@ export async function POST(req: NextRequest) {
     return new Response("API key not configured", { status: 500 });
   }
 
-  const context = clientContext || rag.getRelevantContext(message);
+  // Build full context from all data — LLM handles relevance
+  let context = buildFullContext();
 
-  // Web fetch fallback when local context is weak
+  // Web fetch when query matches an LU page topic
   let webText: string | null = null;
-  if (!context || context.length < 80) {
-    const source = findBestSource(message);
-    if (source) webText = await fetchCached(source.url);
-  }
+  const webSource = findBestSource(message);
+  if (webSource) webText = await fetchCached(webSource.url);
 
-  console.log(`Query: "${message}" | Context Size: ${context.length} chars | Source: ${clientContext ? "client (semantic)" : "server (keyword)"}${webText ? " | Web fallback used" : ""}`);
+  const webContext = webText ? `\n\n=== LIVE WEB (${webSource!.label}) ===\n${webText}` : "";
 
-  const promptContext = context || "No local data found.";
-  const webContext = webText ? `\n\nWeb source:\n${webText}` : "";
+  console.log(`Query: "${message}" | Context: ${context.length} chars | Web: ${webText ? "yes" : "no"}`);
 
   const llmMessages = [
-    { role: "system", content: `${SYSTEM_PROMPT}\n\nCONTEXT:\n${promptContext}${webContext}` },
+    { role: "system", content: `${SYSTEM_PROMPT}\n\nCONTEXT:\n${context}${webContext}` },
     ...safeHistory,
     { role: "user", content: message },
   ];

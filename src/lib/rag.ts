@@ -1,35 +1,6 @@
 import { ECE_DATA } from "./data";
 import { CUTOFF_DATA } from "./cutoff";
 
-export type Chunk = {
-  id: string;
-  section: string;
-  content: string;
-  index: number;
-};
-
-function chunkContent(text: string, section: string, maxWords = 120, overlap = 30): Chunk[] {
-  const words = text.split(/\s+/);
-  if (words.length <= maxWords) {
-    return [{ id: `${section}-0`, section, content: text, index: 0 }];
-  }
-  const chunks: Chunk[] = [];
-  let start = 0;
-  let idx = 0;
-  while (start < words.length) {
-    const end = Math.min(start + maxWords, words.length);
-    chunks.push({
-      id: `${section}-${idx}`,
-      section,
-      content: words.slice(start, end).join(" "),
-      index: idx,
-    });
-    idx++;
-    start += maxWords - overlap;
-  }
-  return chunks;
-}
-
 function buildCutoffResponse(): string {
   if (CUTOFF_DATA.length === 0) return "";
   const years = [...new Set(CUTOFF_DATA.map(c => c.year))].sort((a, b) => b - a);
@@ -48,39 +19,28 @@ function buildCutoffResponse(): string {
   return lines.join("\n");
 }
 
-export function buildChunks(): Chunk[] {
-  const chunks: Chunk[] = [];
+// ── Full context built from all data, sent with every LLM call ──
 
-  chunks.push(...chunkContent(ECE_DATA.curriculum.content, "curriculum"));
-  chunks.push(...chunkContent(ECE_DATA.infrastructure.content, "infrastructure"));
-  chunks.push(...chunkContent(ECE_DATA.faculty.content, "faculty"));
-  chunks.push(...chunkContent(ECE_DATA.placements.content, "placements"));
-  chunks.push(...chunkContent(ECE_DATA.roadmap.content, "roadmap"));
+export function buildFullContext(): string {
+  const sections: string[] = [];
+
+  sections.push(`=== CURRICULUM ===\n${ECE_DATA.curriculum.content}`);
+  sections.push(`=== INFRASTRUCTURE ===\n${ECE_DATA.infrastructure.content}`);
+  sections.push(`=== FACULTY ===\n${ECE_DATA.faculty.content}`);
+  sections.push(`=== PLACEMENTS ===\n${ECE_DATA.placements.content}`);
+  sections.push(`=== ROADMAP ===\n${ECE_DATA.roadmap.content}`);
 
   const cutoffText = buildCutoffResponse();
-  if (cutoffText) {
-    chunks.push(...chunkContent(cutoffText, "cutoffs"));
-  }
+  if (cutoffText) sections.push(`=== CUTOFFS ===\n${cutoffText}`);
 
   ECE_DATA.faq.forEach((faq, i) => {
-    chunks.push({
-      id: `faq-${i}`,
-      section: "faq",
-      content: `Q: ${faq.question}\nA: ${faq.answer}`,
-      index: i,
-    });
+    sections.push(`=== FAQ ${i + 1}: ${faq.question} ===\n${faq.answer}`);
   });
 
-  return chunks;
+  return sections.join("\n\n");
 }
 
-const ALL_CHUNKS = buildChunks();
-
-export function getAllChunks(): Chunk[] {
-  return ALL_CHUNKS;
-}
-
-// ── Legacy keyword engine (kept for fallback) ──
+// ── Legacy keyword engine (fallback only) ──
 
 type LegacyChunk = {
   id: string;

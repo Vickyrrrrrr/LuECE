@@ -5,8 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Send, User, Bot, Sparkles, Loader2, Copy, Check } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { getEmbedder, cosineSimilarity } from "@/lib/embed";
-import { getAllChunks, type Chunk } from "@/lib/rag";
 
 type Message = {
   role: "user" | "assistant";
@@ -21,29 +19,6 @@ const SUGGESTIONS = [
   "What about the faculty?",
 ];
 
-const MODEL_STATUS = {
-  loading: "Loading model...",
-  ready: "",
-  error: "Model failed. Using keyword search.",
-} as const;
-
-async function retrieveContext(query: string, chunks: Chunk[], chunkVecs: Float32Array[]): Promise<string> {
-  const embedder = await getEmbedder();
-  const queryVec = await embedder.embed(query);
-
-  const scored = chunks
-    .map((c, i) => ({ chunk: c, score: cosineSimilarity(queryVec, chunkVecs[i]) }))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 5);
-
-  if (scored.length === 1 && scored[0].score < 0.3) return "";
-
-  const threshold = Math.max(scored[0]?.score ?? 0 * 0.6, 0.25);
-  const top = scored.filter(s => s.score >= threshold);
-
-  return top.map(s => `=== ${s.chunk.section.toUpperCase()} ===\n${s.chunk.content}`).join("\n\n");
-}
-
 export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([
     { role: "assistant", content: "Hello! I'm your LuECE guide. Ask me anything about Lucknow University's ECE department, placements, or curriculum." }
@@ -51,38 +26,14 @@ export default function Chat() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
-  const [modelReady, setModelReady] = useState(false);
-  const [modelStatus, setModelStatus] = useState<"loading" | "ready" | "error">("loading");
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const chunkVecsRef = useRef<Float32Array[]>([]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-  // Init embedding model + pre-compute chunk vectors
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const embedder = await getEmbedder();
-        if (cancelled) return;
-        const chunks = getAllChunks();
-        const vecs = await Promise.all(chunks.map(c => embedder.embed(c.content)));
-        if (cancelled) return;
-        chunkVecsRef.current = vecs;
-        setModelReady(true);
-        setModelStatus("ready");
-      } catch (e) {
-        console.error("Failed to load embedding model:", e);
-        if (!cancelled) setModelStatus("error");
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
 
   const autoResize = () => {
     const el = inputRef.current;
@@ -107,19 +58,12 @@ export default function Chat() {
     abortRef.current = controller;
 
     try {
-      // Semantic retrieval on client
-      let context = "";
-      if (modelReady && chunkVecsRef.current.length > 0) {
-        context = await retrieveContext(text, getAllChunks(), chunkVecsRef.current);
-      }
-
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: text,
           history: updatedMessages.slice(0, -1),
-          context: context || undefined,
         }),
         signal: controller.signal,
       });
@@ -171,7 +115,7 @@ export default function Chat() {
     } finally {
       setIsTyping(false);
     }
-  }, [messages, isTyping, modelReady]);
+  }, [messages, isTyping]);
 
   const handleSend = useCallback(() => {
     sendMessage(input);
@@ -195,12 +139,6 @@ export default function Chat() {
         </div>
         <div className="flex items-baseline gap-2">
           <h3 className="text-xs sm:text-sm font-semibold text-charcoal">ECE Advisor</h3>
-          {modelStatus === "loading" && (
-            <span className="text-[10px] text-charcoal-muted/50">{MODEL_STATUS.loading}</span>
-          )}
-          {modelStatus === "error" && (
-            <span className="text-[10px] text-charcoal-muted/50">{MODEL_STATUS.error}</span>
-          )}
         </div>
       </div>
 
