@@ -3,14 +3,14 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, User, Bot, Sparkles, Loader2, Copy, Check } from "lucide-react";
-
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { getEmbedder, cosineSimilarity } from "@/lib/embed";
+import { getAllChunks, type Chunk } from "@/lib/rag";
 
 type Message = {
   role: "user" | "assistant";
   content: string;
-  source?: string;
 };
 
 const SUGGESTIONS = [
@@ -21,6 +21,29 @@ const SUGGESTIONS = [
   "What about the faculty?",
 ];
 
+const MODEL_STATUS = {
+  loading: "Loading model...",
+  ready: "",
+  error: "Model failed. Using keyword search.",
+} as const;
+
+async function retrieveContext(query: string, chunks: Chunk[], chunkVecs: Float32Array[]): Promise<string> {
+  const embedder = await getEmbedder();
+  const queryVec = await embedder.embed(query);
+
+  const scored = chunks
+    .map((c, i) => ({ chunk: c, score: cosineSimilarity(queryVec, chunkVecs[i]) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
+
+  if (scored.length === 1 && scored[0].score < 0.3) return "";
+
+  const threshold = Math.max(scored[0]?.score ?? 0 * 0.6, 0.25);
+  const top = scored.filter(s => s.score >= threshold);
+
+  return top.map(s => `=== ${s.chunk.section.toUpperCase()} ===\n${s.chunk.content}`).join("\n\n");
+}
+
 export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([
     { role: "assistant", content: "Hello! I'm your LuECE guide. Ask me anything about Lucknow University's ECE department, placements, or curriculum." }
@@ -28,14 +51,38 @@ export default function Chat() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [modelReady, setModelReady] = useState(false);
+  const [modelStatus, setModelStatus] = useState<"loading" | "ready" | "error">("loading");
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const chunkVecsRef = useRef<Float32Array[]>([]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Init embedding model + pre-compute chunk vectors
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const embedder = await getEmbedder();
+        if (cancelled) return;
+        const chunks = getAllChunks();
+        const vecs = await Promise.all(chunks.map(c => embedder.embed(c.content)));
+        if (cancelled) return;
+        chunkVecsRef.current = vecs;
+        setModelReady(true);
+        setModelStatus("ready");
+      } catch (e) {
+        console.error("Failed to load embedding model:", e);
+        if (!cancelled) setModelStatus("error");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const autoResize = () => {
     const el = inputRef.current;
@@ -60,12 +107,19 @@ export default function Chat() {
     abortRef.current = controller;
 
     try {
+      // Semantic retrieval on client
+      let context = "";
+      if (modelReady && chunkVecsRef.current.length > 0) {
+        context = await retrieveContext(text, getAllChunks(), chunkVecsRef.current);
+      }
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: text,
           history: updatedMessages.slice(0, -1),
+          context: context || undefined,
         }),
         signal: controller.signal,
       });
@@ -79,7 +133,6 @@ export default function Chat() {
 
       setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
-      // Start stream immediately
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -118,7 +171,7 @@ export default function Chat() {
     } finally {
       setIsTyping(false);
     }
-  }, [messages, isTyping]);
+  }, [messages, isTyping, modelReady]);
 
   const handleSend = useCallback(() => {
     sendMessage(input);
@@ -135,14 +188,19 @@ export default function Chat() {
 
   return (
     <div className="flex flex-col h-[70vh] sm:h-[600px] w-full max-w-2xl mx-auto card-premium overflow-hidden">
-      <div className="flex items-center gap-2 p-3 sm:p-4 border-b border-cream-border">
+      <div className="flex items-center gap-3 p-3 sm:p-4 border-b border-cream-border">
         <div className="p-1.5 sm:p-2 bg-charcoal text-white rounded-full">
           <Sparkles size={16} className="sm:hidden" />
           <Sparkles size={18} className="hidden sm:block" />
         </div>
-        <div>
+        <div className="flex items-baseline gap-2">
           <h3 className="text-xs sm:text-sm font-semibold text-charcoal">ECE Advisor</h3>
-          <p className="text-[10px] sm:text-xs text-charcoal-muted">Always active for LU students</p>
+          {modelStatus === "loading" && (
+            <span className="text-[10px] text-charcoal-muted/50">{MODEL_STATUS.loading}</span>
+          )}
+          {modelStatus === "error" && (
+            <span className="text-[10px] text-charcoal-muted/50">{MODEL_STATUS.error}</span>
+          )}
         </div>
       </div>
 
@@ -175,15 +233,17 @@ export default function Chat() {
                   {m.role === "user" ? <User size={14} className="hidden sm:block" /> : <Bot size={14} className="hidden sm:block" />}
                 </div>
                 <div className="flex flex-col gap-1 w-full">
-                  <div className={`p-3 sm:p-4 rounded-card text-xs sm:text-sm leading-relaxed prose prose-sm max-w-none relative group ${
+                  <div className={`p-3 sm:p-4 rounded-card text-xs sm:text-sm leading-relaxed relative group ${
                     m.role === "user" ? "bg-charcoal text-charcoal-offwhite" : "bg-cream border border-cream-border text-charcoal shadow-sm"
                   }`}>
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {m.content}
-                    </ReactMarkdown>
-                    
+                    <div className="chat-prose">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {m.content}
+                      </ReactMarkdown>
+                    </div>
+
                     {m.role === "assistant" && m.content && (
-                      <button 
+                      <button
                         onClick={() => {
                           navigator.clipboard.writeText(m.content);
                           setCopiedIndex(i);
@@ -196,11 +256,6 @@ export default function Chat() {
                       </button>
                     )}
                   </div>
-                  {m.source && (
-                    <span className="text-[10px] text-charcoal-muted opacity-50 px-1">
-                      Source: {m.source}
-                    </span>
-                  )}
                 </div>
               </div>
             </motion.div>

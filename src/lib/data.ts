@@ -23,6 +23,12 @@ export const ECE_DATA = {
     summary: "Dedicated Training and Placement Cell. 52+ ECE students interned at BSNL, AAI, HPCL, IIT Madras, and others. Past recruiters include TCS, HCL, Intel, and HP.",
     highlights: ["Dedicated Training and Placement Cell", "52 ECE Students in Summer Internships", "TCS, HCL, Intel, BSNL, AAI Partnerships", "Communication and Soft Skills Training"],
   },
+  roadmap: {
+    title: "VLSI Roadmap",
+    content: "The department has a VLSI chip design roadmap at /roadmap — it covers everything from setting up tools to tape-out, with hand-picked NPTEL courses and open-source tools. Designed for beginners, doable in 6-9 months. Check it out at /roadmap.",
+    summary: "Beginner-friendly VLSI roadmap from environment setup to tape-out, available at /roadmap.",
+    highlights: ["VLSI Roadmap at /roadmap", "NPTEL Video Courses and Open-Source Tools", "Zero to Tape-out in 6-9 Months", "Designed for Beginners"],
+  },
   faq: [
     {
       question: "What programmes does the ECE department offer?",
@@ -43,6 +49,10 @@ export const ECE_DATA = {
     {
       question: "Where is the campus located and how to contact the department?",
       answer: "The Faculty of Engineering and Technology is at University of Lucknow's second campus in Jankipuram extension, Lucknow-226031. The campus also houses the Faculty of Law and Institute of Management Sciences. Contact Dr. Siddharth Singh (HoD Incharge) at 9559958600 or singh_siddharth@lkouniv.ac.in."
+    },
+    {
+      question: "I'm coming to college soon. What should I do before joining if I'm interested in VLSI?",
+      answer: "Check out the VLSI roadmap at /roadmap — it's built for absolute beginners. Before you arrive, watch a quick 'What is VLSI' video, install WSL2 if you're on Windows, and brush up on binary/Boolean algebra. Each takes an evening. The roadmap handles the rest."
     }
   ]
 };

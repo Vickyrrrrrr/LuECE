@@ -1,3 +1,5 @@
+"use client";
+
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 import FAQ from "@/components/FAQ";
@@ -29,7 +31,7 @@ export default function Home() {
 
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full max-w-xs sm:max-w-none justify-center mb-16 sm:mb-24">
           <Link href="/chat" className="btn-primary text-sm sm:text-base">Ask the ECE Advisor</Link>
-          <a href="#overview" className="btn-ghost text-sm sm:text-base">Explore</a>
+          <button onClick={() => document.getElementById("overview")?.scrollIntoView({ behavior: "smooth" })} className="btn-ghost text-sm sm:text-base cursor-pointer">Explore</button>
         </div>
 
         {/* Stats Section */}
